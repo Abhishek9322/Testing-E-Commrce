@@ -3,6 +3,7 @@ using E_Commrce.Prictice.DTOs;
 using E_Commrce.Prictice.Iinterface;
 using E_Commrce.Prictice.Model;
 using E_Commrce.Prictice.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ namespace E_Commrce.Prictice.Controllers
         }
 
 
-        //Register OTP ✅
+        //Register OTP 
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
@@ -38,7 +39,9 @@ namespace E_Commrce.Prictice.Controllers
             var user = new User
             {
                 Email = dto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password) ,
+                Role=string.IsNullOrEmpty(dto.Role)?"User":dto.Role
+                
             };
 
 
@@ -57,7 +60,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
 
-        //Login using Password ✅
+        //Login using Password 
         [HttpPost("login-password")]
         public async Task<IActionResult> LoginWithPassword(LoginDto dto)
         {
@@ -66,7 +69,7 @@ namespace E_Commrce.Prictice.Controllers
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Invalid credentials");
 
-            var token = _jwt.GenerateToken(user.Email, dto.RememberMe);
+            var token = _jwt.GenerateToken(user.Email, dto.RememberMe,user);
             return Ok(new { Token = token });
         }
 
@@ -76,7 +79,8 @@ namespace E_Commrce.Prictice.Controllers
 
 
 
-        //Request OTP for login ✅
+        //Request OTP for login
+        
         [HttpPost("request-otp")]
         public async Task<IActionResult> RequestOtp([FromBody] string email)
         {
@@ -99,7 +103,11 @@ namespace E_Commrce.Prictice.Controllers
         }
 
 
+
+
+
         //Verify OTP (does not login just verify)
+        
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp(VerifyOtpDto dto)
         {
@@ -121,6 +129,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Lgin with OTP
+        
         [HttpPost("login-otp")]
         public async Task<IActionResult>LoginWithOtp(OtpLoginDto dto)
         {
@@ -131,19 +140,20 @@ namespace E_Commrce.Prictice.Controllers
 
 
             if (otp == null || otp.ExpiryTime < DateTime.UtcNow)
-                return Unauthorized("Ivalud or expired OTP");
+                return Unauthorized("Invalid or expired OTP");
 
 
             var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
             if (user == null) return BadRequest("User not found");
 
 
-            var token = _jwt.GenerateToken(user.Email, dto.RememberMe);
+            var token = _jwt.GenerateToken(user.Email, dto.RememberMe ,user);
             return Ok(new {Token=token });
         }
 
 
-        //Forgot password 
+        //Forgot password
+        
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
@@ -169,7 +179,11 @@ namespace E_Commrce.Prictice.Controllers
             return Ok("OTP sent for password reset.");
         }
 
+
+
+
         //Reset the Password using OTP
+
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ForgetPasswordDto dto)
         {
@@ -190,7 +204,7 @@ namespace E_Commrce.Prictice.Controllers
             await _context.SaveChangesAsync();
 
 
-            return Ok("Password reset successfully..");
+            return Ok("Password reset successfully......");
 
         }
 

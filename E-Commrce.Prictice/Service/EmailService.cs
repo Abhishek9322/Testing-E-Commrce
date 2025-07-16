@@ -10,8 +10,8 @@ namespace E_Commrce.Prictice.Service
     {
         public async Task SendAsync(string to, string subject, string bodyHtml)
         {
-            var fromEmail = "kambleabhishek3303@gmail.com"; // ✅ Must match the credential below
-            var appPassword = "wdlaplhwcmbuxwmm"; // ✅ App password only Create fromt the Google verification 
+            var fromEmail = "kambleabhishek3303@gmail.com";                       //  Must match the credential below
+            var appPassword = "wdlaplhwcmbuxwmm";                               //  App password only Create fromt the Google verification 
 
             var mail = new MailMessage(fromEmail, to, subject, bodyHtml)
             {

@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
+using E_Commrce.Prictice.Model;
 
 
 namespace E_Commrce.Prictice.Service
@@ -15,7 +16,7 @@ namespace E_Commrce.Prictice.Service
             _config = config;   
         }
 
-        public string GenerateToken(string email,bool rememberMe)
+        public string GenerateToken(string email,bool rememberMe,User user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JwtSettings:Key"]));
             var creds=new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
@@ -24,8 +25,14 @@ namespace E_Commrce.Prictice.Service
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub,email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) ,
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Name ,user.Email)
+            
+            
+            
             };
+
 
             var expiry = rememberMe
                 ? DateTime.UtcNow.AddDays(int.Parse(_config["JwtSettings:ExpiryDays"]))

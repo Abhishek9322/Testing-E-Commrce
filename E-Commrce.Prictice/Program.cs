@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +47,56 @@ builder.Services.AddAuthentication(option =>
         };
     });
 
+
+
+builder.Services.AddAuthorization();
+
+
+//builder.Services.AddControllers()
+//    .AddJsonOptions(option =>
+//    {
+//        option.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+//        option.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+
+//    });
+//// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+//builder.Services.AddEndpointsApiExplorer();     // Configure Swagger with JWT support
+//builder.Services.AddSwaggerGen(c =>
+//{
+//    //  This line defines the OpenAPI version and is REQUIRED
+//    c.SwaggerDoc("v1", new OpenApiInfo
+//    {
+//        Title = "E-Commrce.Practice",
+//        Version = "v1",  // <-- This adds the correct version field
+//        Description = "API for tracking ecological footprints"
+//    });
+
+//    // JWT Bearer Auth Setup
+//    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+//    {
+//        Name = "Authorization",
+//        Type = SecuritySchemeType.Http,
+//        Scheme = "Bearer",
+//        BearerFormat = "JWT",
+//        In = ParameterLocation.Header,
+//        Description = "Enter your JWT token in the format: Bearer {token}"
+//    });
+
+//    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+//    {
+//        {
+//            new OpenApiSecurityScheme
+//            {
+//                Reference = new OpenApiReference
+//                {
+//                    Type = ReferenceType.SecurityScheme,
+//                    Id = "Bearer"
+//                }
+//            },
+//            Array.Empty<string>()
+//        }
+//    });
+//});
 
 
 
