@@ -71,6 +71,11 @@ namespace E_Commrce.Prictice.Controllers
 
             var token = _jwt.GenerateToken(user.Email, dto.RememberMe,user);
             return Ok(new { Token = token });
+
+
+
+            //login using the password and email
+
         }
 
 
