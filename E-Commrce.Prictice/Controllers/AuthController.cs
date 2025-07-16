@@ -204,7 +204,7 @@ namespace E_Commrce.Prictice.Controllers
             await _context.SaveChangesAsync();
 
 
-            return Ok("Password reset successfully......");
+            return Ok("Password Reset successfully......");
 
         }
 
