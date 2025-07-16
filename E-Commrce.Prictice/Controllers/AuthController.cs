@@ -51,7 +51,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
 
-            return Ok("User registered");
+            return Ok("User Successfully registered");
           
 
         }
@@ -67,7 +67,7 @@ namespace E_Commrce.Prictice.Controllers
 
             var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid credentials");
+                return Unauthorized("Invalid Information..");
 
             var token = _jwt.GenerateToken(user.Email, dto.RememberMe,user);
             return Ok(new { Token = token });
