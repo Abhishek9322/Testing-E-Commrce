@@ -33,7 +33,7 @@ namespace E_Commrce.Prictice.Controllers
         public async Task<IActionResult> Register(RegisterDto dto)
         {
             if (await _context.Users.AnyAsync(x => x.Email == dto.Email))
-                return BadRequest("Email already registered.");
+                return BadRequest("Email Already registered.");
 
 
             var user = new User
@@ -51,7 +51,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
 
-            return Ok("User Successfully registered");
+            return Ok("User Successfully Registered");
           
 
         }
@@ -85,7 +85,7 @@ namespace E_Commrce.Prictice.Controllers
         public async Task<IActionResult> RequestOtp([FromBody] string email)
         {
             var user=await _context.Users.FirstOrDefaultAsync(x=>x.Email == email);
-            if (user == null) return BadRequest("Email not registerd ");
+            if (user == null) return BadRequest("Email Don't Registerd ");
 
             var otpCode = new Random().Next(100000, 999999).ToString();
             var otp = new OtpToken
