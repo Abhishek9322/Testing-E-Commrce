@@ -6,6 +6,7 @@ using E_Commrce.Prictice.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Globalization;
@@ -43,7 +44,7 @@ namespace E_Commrce.Prictice.Controllers
                 Role=string.IsNullOrEmpty(dto.Role)?"User":dto.Role
                 
             };
-
+             
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -62,27 +63,25 @@ namespace E_Commrce.Prictice.Controllers
 
         //Login using Password 
         [HttpPost("login-password")]
-        public async Task<IActionResult> LoginWithPassword(LoginDto dto)
+        public async Task<IActionResult> LoginWithPassword(LoginDto dto )
         {
 
             var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
+
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+
                 return Unauthorized("Invalid Information..");
 
-            var token = _jwt.GenerateToken(user.Email, dto.RememberMe,user);
+            var token = _jwt.GenerateToken(user.Email, dto.RememberMe,user );
+
             return Ok(new { Token = token });
 
 
 
-            //login using the password and email
+ 
 
         }
-
-
-
-
-
-
+      
 
         //Request OTP for login
         
@@ -122,9 +121,14 @@ namespace E_Commrce.Prictice.Controllers
                 .FirstOrDefaultAsync();
 
 
+            
+
             if (otp == null || otp.ExpiryTime < DateTime.UtcNow)
                 return Unauthorized("Invalid or expired OTP.");
 
+
+            otp.IsVerify = true;
+            await _context.SaveChangesAsync();
 
             return Ok("OTP is valid..");   
         }
@@ -136,7 +140,7 @@ namespace E_Commrce.Prictice.Controllers
         //Lgin with OTP
         
         [HttpPost("login-otp")]
-        public async Task<IActionResult>LoginWithOtp(OtpLoginDto dto)
+        public async Task<IActionResult>LoginWithOtp(OtpLoginDto dto )
         {
             var otp = await _context.OtpTokens
                 .Where(o => o.Email == dto.Email && o.Code == dto.OtpCode)
@@ -144,12 +148,18 @@ namespace E_Commrce.Prictice.Controllers
                 .FirstOrDefaultAsync();
 
 
+            
+
+
             if (otp == null || otp.ExpiryTime < DateTime.UtcNow)
                 return Unauthorized("Invalid or expired OTP");
 
-
+           
             var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
             if (user == null) return BadRequest("User not found");
+
+            if (!otp.IsVerify)
+                return Unauthorized("OTP not verify . Please verify before the login..");
 
 
             var token = _jwt.GenerateToken(user.Email, dto.RememberMe ,user);
@@ -209,7 +219,7 @@ namespace E_Commrce.Prictice.Controllers
             await _context.SaveChangesAsync();
 
 
-            return Ok("Password Reset successfully......");
+            return Ok("Password Reset Successfully......");
 
         }
 
