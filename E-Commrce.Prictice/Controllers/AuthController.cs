@@ -62,6 +62,8 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Login using Password 
+
+      //  [Authorize(Roles ="Admin,User")]
         [HttpPost("login-password")]
         public async Task<IActionResult> LoginWithPassword(LoginDto dto )
         {
@@ -81,10 +83,10 @@ namespace E_Commrce.Prictice.Controllers
  
 
         }
-      
+
 
         //Request OTP for login
-        
+     //   [Authorize(Roles ="Admin,User")]
         [HttpPost("request-otp")]
         public async Task<IActionResult> RequestOtp([FromBody] string email)
         {
@@ -111,7 +113,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Verify OTP (does not login just verify)
-        
+       // [Authorize(Roles = "Admin,User")]
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp(VerifyOtpDto dto)
         {
@@ -138,7 +140,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Lgin with OTP
-        
+       // [Authorize(Roles = "Admin,User")]
         [HttpPost("login-otp")]
         public async Task<IActionResult>LoginWithOtp(OtpLoginDto dto )
         {
@@ -168,7 +170,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Forgot password
-        
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
@@ -198,7 +200,7 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Reset the Password using OTP
-
+        [Authorize(Roles = "Admin,User")]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ForgetPasswordDto dto)
         {

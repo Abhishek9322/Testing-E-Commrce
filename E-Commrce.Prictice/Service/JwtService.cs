@@ -41,7 +41,7 @@ namespace E_Commrce.Prictice.Service
             var token = new JwtSecurityToken(
 
                 issuer: _config["JwtSettings:Issuer"],
-                audience: _config["JwtSettigns:Audience"],
+                audience: _config["JwtSettings:Audience"],
                 claims: claims,
                 expires: expiry,
                 signingCredentials: creds
