@@ -69,6 +69,7 @@ namespace E_Commrce.Prictice.Controllers
         //Login using Password 
 
       //  [Authorize(Roles ="Admin,User")]
+         
         [HttpPost("login-password")]
         public async Task<IActionResult> LoginWithPassword(LoginDto dto )
         {
@@ -97,14 +98,14 @@ namespace E_Commrce.Prictice.Controllers
         public async Task<IActionResult> RequestOtp([FromBody] string email)
         {
             var otp = await _context.Users.FirstOrDefaultAsync(e => e.Email == email);
-            if (email == null) return Unauthorized("Email  Not Registerd...");
+            if (otp == null) return Unauthorized("Email  Not Registerd...");
 
 
-            var otpCode = new Random().Next(100000, 999999).ToString();
+            var otpCode = new Random().Next(1000, 9999).ToString();   //Generate Random number otp
 
             _cache.Set(email, otpCode, TimeSpan.FromMinutes(5));   //store the OTP in cache for temporarily
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();  
 
             await _emailservice.SendAsync(email, "Login OTP", $"<h2>Your OTP is <b>{otpCode}</b></h2>");
 
@@ -123,6 +124,9 @@ namespace E_Commrce.Prictice.Controllers
             if(_cache.TryGetValue(dto.Email ,out string cachedOtp)) 
             {
 
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+                if (user == null) return BadRequest("User not found");
+
                 if (cachedOtp != dto.OtpCode)
                     return Unauthorized("Invalid OTP"); 
 
@@ -130,22 +134,15 @@ namespace E_Commrce.Prictice.Controllers
                 _cache.Remove(dto.Email);
 
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-                if (user == null) return BadRequest("User not found");
-
-
-                  
-
-
                 var token = _jwt.GenerateToken(dto.Email, dto.RememberMe,user );
                 return Ok(new { Token = token });
 
             }
-
+                
            
           
                
-            return Unauthorized("OTP  Expired or not found...");
+            return Unauthorized("OTP Expired or not found...");
 
            
         }
@@ -159,7 +156,7 @@ namespace E_Commrce.Prictice.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
             if (user == null) return BadRequest("Email not registered.");
 
-            var otpCode = new Random().Next(100000, 999999).ToString();
+            var otpCode = new Random().Next(1000, 9999).ToString();
 
 
             _cache.Set(email, otpCode, TimeSpan.FromMinutes(5));
@@ -178,23 +175,28 @@ namespace E_Commrce.Prictice.Controllers
         //Reset the Password using OTP
        // [Authorize(Roles = "Admin,User")]
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ForgetPasswordDto dto)
+        public async Task<IActionResult> ResetPassword( ForgetPasswordDto dto)
         {
-            if (_cache.TryGetValue(dto.Email, out string resetOpt))
-            {
-                if (resetOpt != dto.OtpCode)
-                    return Unauthorized("Invalid OTP ..");
-
-
-                _cache.Remove(dto.Email);
+            if (!_cache.TryGetValue(dto.Email, out string resetOpt))
+                return Unauthorized("OTP expired oof not requested..");
+            
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
                 if (user == null) return BadRequest("User not found..");
 
 
+
+                if ( string.IsNullOrWhiteSpace(dto.OtpCode)  ||  resetOpt != dto.OtpCode)
+                    return Unauthorized("Invalid or missing OTP");
+
+
+                _cache.Remove(dto.Email);
+              
+                
+
                 user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
                 await _context.SaveChangesAsync();
-            }
+            
 
             return Ok("Password Reset Successfully......");
 
