@@ -48,6 +48,8 @@ builder.Services.AddAuthentication(option =>
     });
 
 
+    builder.Services.AddMemoryCache();  //for storing the temporarily in the RAM 
+
 
 builder.Services.AddAuthorization();
 

@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using E_Commrce.Prictice.Model;
+using System.Security.Cryptography;
 
 
 namespace E_Commrce.Prictice.Service
@@ -34,7 +35,7 @@ namespace E_Commrce.Prictice.Service
             };
 
 
-            var expiry = rememberMe
+            var expiry = rememberMe             // value ? true value : false value ;  it is called ternary operator 
                 ? DateTime.UtcNow.AddDays(int.Parse(_config["JwtSettings:ExpiryDays"]))
                 : DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtSettings:ExpiryMinutes"]));
 
@@ -52,6 +53,9 @@ namespace E_Commrce.Prictice.Service
 
 
         }
+
+       
+
 
     }
 }
