@@ -8,8 +8,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using System.Security.Cryptography;
+using static System.Net.WebRequestMethods;
 
 namespace E_Commrce.Prictice.Controllers
 {
@@ -20,11 +23,13 @@ namespace E_Commrce.Prictice.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailservice;
         private readonly JwtService _jwt;
-        public AuthController(ApplicationDbContext context , IEmailService emailservice ,JwtService jwt)
+        private readonly IMemoryCache _cache;
+        public AuthController(ApplicationDbContext context , IEmailService emailservice ,JwtService jwt , IMemoryCache cache )
         {
             _context = context;
             _emailservice = emailservice;  
             _jwt = jwt; 
+            _cache= cache;
         }
 
 
@@ -69,9 +74,8 @@ namespace E_Commrce.Prictice.Controllers
         {
 
             var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
-
+            
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-
                 return Unauthorized("Invalid Information..");
 
             var token = _jwt.GenerateToken(user.Email, dto.RememberMe,user );
@@ -80,63 +84,34 @@ namespace E_Commrce.Prictice.Controllers
 
 
 
- 
+
 
         }
+
 
 
         //Request OTP for login
-     //   [Authorize(Roles ="Admin,User")]
-        [HttpPost("request-otp")]
+        //   [Authorize(Roles ="Admin,User")]
+
+        [HttpPost("Request-otp")]
         public async Task<IActionResult> RequestOtp([FromBody] string email)
         {
-            var user=await _context.Users.FirstOrDefaultAsync(x=>x.Email == email);
-            if (user == null) return BadRequest("Email Don't Registerd ");
+            var otp = await _context.Users.FirstOrDefaultAsync(e => e.Email == email);
+            if (email == null) return Unauthorized("Email  Not Registerd...");
+
 
             var otpCode = new Random().Next(100000, 999999).ToString();
-            var otp = new OtpToken
-            {
-                Email = email,
-                Code = otpCode,
-                ExpiryTime = DateTime.UtcNow.AddMinutes(5)
-            };
 
-            _context.OtpTokens.Add(otp);
+            _cache.Set(email, otpCode, TimeSpan.FromMinutes(5));   //store the OTP in cache for temporarily
+
             await _context.SaveChangesAsync();
 
-            await _emailservice.SendAsync(email,"Login OTP",$"<h2>Your OTP is <b>{otpCode}</b></h2>");
+            await _emailservice.SendAsync(email, "Login OTP", $"<h2>Your OTP is <b>{otpCode}</b></h2>");
+
             return Ok("OTP Sent Successfully..");
+
+
         }
-
-
-
-
-
-        //Verify OTP (does not login just verify)
-       // [Authorize(Roles = "Admin,User")]
-        [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp(VerifyOtpDto dto)
-        {
-            var otp =await _context.OtpTokens
-                .Where(o=>o.Email == dto.Email && o.Code==dto.OtpCode)
-                .OrderByDescending(o=>o.ExpiryTime)
-                .FirstOrDefaultAsync();
-
-
-            
-
-            if (otp == null || otp.ExpiryTime < DateTime.UtcNow)
-                return Unauthorized("Invalid or expired OTP.");
-
-
-            otp.IsVerify = true;
-            await _context.SaveChangesAsync();
-
-            return Ok("OTP is valid..");   
-        }
-
-
-
 
 
         //Lgin with OTP
@@ -144,33 +119,40 @@ namespace E_Commrce.Prictice.Controllers
         [HttpPost("login-otp")]
         public async Task<IActionResult>LoginWithOtp(OtpLoginDto dto )
         {
-            var otp = await _context.OtpTokens
-                .Where(o => o.Email == dto.Email && o.Code == dto.OtpCode)
-                .OrderByDescending(o => o.ExpiryTime)
-                .FirstOrDefaultAsync();
+
+            if(_cache.TryGetValue(dto.Email ,out string cachedOtp)) 
+            {
+
+                if (cachedOtp != dto.OtpCode)
+                    return Unauthorized("Invalid OTP"); 
 
 
-            
+                _cache.Remove(dto.Email);
 
 
-            if (otp == null || otp.ExpiryTime < DateTime.UtcNow)
-                return Unauthorized("Invalid or expired OTP");
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+                if (user == null) return BadRequest("User not found");
+
+
+                  
+
+
+                var token = _jwt.GenerateToken(dto.Email, dto.RememberMe,user );
+                return Ok(new { Token = token });
+
+            }
 
            
-            var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
-            if (user == null) return BadRequest("User not found");
+          
+               
+            return Unauthorized("OTP  Expired or not found...");
 
-            if (!otp.IsVerify)
-                return Unauthorized("OTP not verify . Please verify before the login..");
-
-
-            var token = _jwt.GenerateToken(user.Email, dto.RememberMe ,user);
-            return Ok(new {Token=token });
+           
         }
 
 
         //Forgot password
-        [Authorize(Roles = "Admin,User")]
+       // [Authorize(Roles = "Admin,User")]
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
@@ -179,15 +161,9 @@ namespace E_Commrce.Prictice.Controllers
 
             var otpCode = new Random().Next(100000, 999999).ToString();
 
-            var otp = new OtpToken
-            {
-                Email = email,
-                Code = otpCode,
-                ExpiryTime = DateTime.UtcNow.AddMinutes(5)
-            };
 
+            _cache.Set(email, otpCode, TimeSpan.FromMinutes(5));
 
-            _context.OtpTokens.Add(otp);    
             await _context.SaveChangesAsync();
 
 
@@ -200,26 +176,25 @@ namespace E_Commrce.Prictice.Controllers
 
 
         //Reset the Password using OTP
-        [Authorize(Roles = "Admin,User")]
+       // [Authorize(Roles = "Admin,User")]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ForgetPasswordDto dto)
         {
-            var otp = await _context.OtpTokens
-                .Where(o => o.Email == dto.Email && o.Code == dto.OtpCode)
-                .OrderByDescending(o => o.ExpiryTime)
-                .FirstOrDefaultAsync();
+            if (_cache.TryGetValue(dto.Email, out string resetOpt))
+            {
+                if (resetOpt != dto.OtpCode)
+                    return Unauthorized("Invalid OTP ..");
 
 
-            if (otp == null || otp.ExpiryTime < DateTime.UtcNow)
-                return Unauthorized("Invaild or Expired OTP.");
+                _cache.Remove(dto.Email);
 
-            var user=await _context.Users.FirstOrDefaultAsync(u=>u.Email == dto.Email);
-            if (user == null) return BadRequest("User not found..");
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+                if (user == null) return BadRequest("User not found..");
 
 
-            user.PasswordHash=BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
-            await _context.SaveChangesAsync();
-
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+                await _context.SaveChangesAsync();
+            }
 
             return Ok("Password Reset Successfully......");
 
