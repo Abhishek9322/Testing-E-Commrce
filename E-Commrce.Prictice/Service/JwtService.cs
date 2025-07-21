@@ -35,7 +35,7 @@ namespace E_Commrce.Prictice.Service
             };
 
 
-            var expiry = rememberMe             // value ? true value : false value ;  it is called ternary operator 
+            var expiry = rememberMe             //mostly work for the bool value :- value ? true value : false value ;  it is called ternary operator 
                 ? DateTime.UtcNow.AddDays(int.Parse(_config["JwtSettings:ExpiryDays"]))
                 : DateTime.UtcNow.AddMinutes(int.Parse(_config["JwtSettings:ExpiryMinutes"]));
 
