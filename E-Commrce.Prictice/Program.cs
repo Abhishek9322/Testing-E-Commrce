@@ -1,5 +1,4 @@
 using E_Commrce.Prictice.Data;
-using E_Commrce.Prictice.Iinterface;
 using E_Commrce.Prictice.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -10,6 +9,10 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using E_Commrce.Prictice.Repository.Interface;
+using E_Commrce.Prictice.Repository.Service;
+using E_Commrce.Prictice.Repository.Helper.helperInterface;
+using E_Commrce.Prictice.Repository.Helper.helperClass;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +55,12 @@ builder.Services.AddAuthentication(option =>
 
 
 builder.Services.AddAuthorization();
+
+
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+
+builder.Services.AddScoped<IOtpService, OtpService>();
+
 
 
 builder.Services.AddControllers()

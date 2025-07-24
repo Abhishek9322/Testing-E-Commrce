@@ -1,11 +1,11 @@
-﻿using E_Commrce.Prictice.Iinterface;
+﻿using E_Commrce.Prictice.Repository.Interface;
 using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 using System.Net;
 using System.Net.Mail;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 
-namespace E_Commrce.Prictice.Service
+namespace E_Commrce.Prictice.Repository.Service
 {
     public class EmailService : IEmailService
     {

@@ -1,4 +1,4 @@
-﻿namespace E_Commrce.Prictice.Iinterface
+﻿namespace E_Commrce.Prictice.Repository.Interface
 {
     public interface IEmailService
     {
