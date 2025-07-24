@@ -1,11 +1,7 @@
 ﻿
 using E_Commrce.Prictice.DTOs;
-
 using E_Commrce.Prictice.Repository.Interface;
-
 using Microsoft.AspNetCore.Mvc;
-
-
 
 namespace E_Commrce.Prictice.Controllers
 {
@@ -14,11 +10,8 @@ namespace E_Commrce.Prictice.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthRepository _authRepo;
-        public AuthController(IAuthRepository authRepo)
-        {
-            _authRepo = authRepo;
-        }
-
+        public AuthController(IAuthRepository authRepo)=>_authRepo=authRepo;
+     
         //Register OTP 
 
         [HttpPost("register")]
@@ -64,10 +57,11 @@ namespace E_Commrce.Prictice.Controllers
         {
             var token= await _authRepo.LoginWithOtpAsync(dto);
 
-            if (string.IsNullOrEmpty(token))   //if it got the null or empty value it show the true then this message is show 
-                return Unauthorized("Invalid OTP or user not found..");  //if the otp is wrong or the not add then it show the error that why we use it 
+          //if it got the null or empty value it show the true then this message is show 
+             //if the otp is wrong or the not add then it show the error then the false part run 
 ;
-            return Ok(new { Token=token});
+            return string.IsNullOrEmpty(token) ? Unauthorized("") : Ok(new { token = token });
+
 
         }
 
@@ -89,12 +83,8 @@ namespace E_Commrce.Prictice.Controllers
         {
             var result= await _authRepo.ResetPasswordAsync(dto);
 
-            if(string.IsNullOrEmpty(result))
-                return Unauthorized("Invalid OTP or user not found..");
+            return string.IsNullOrEmpty(result)?Unauthorized("Invalid OTP or user not found.."):Ok(result);
 
-
-            return Ok(result);
-         //   return result=="Password Reset Successfully.."? Unauthorized(result) :Ok(result);
         }
 
 
